@@ -35,3 +35,31 @@
 
 -If key doesn’t exist, i is the value type’s zero value (0). Second value (ok) is a bool (true if the key exists , and false if not).
 
+
+
+
+-To iterate over the contents of a map, use the range keyword:
+
+= for key, value := range m {
+    fmt.Println("Key:", key, "Value:", value)
+}
+
+-To initialize a map with some data, use a map literal:
+
+= commits := map[string]int{
+    "rsc": 3711,
+    "r":   2138,
+    "gri": 1908,
+    "adg": 912,
+}
+
+-The same syntax may be used to initialize an empty map, which is functionally identical to using the make function:
+
+= m = map[string]int{}
+
+-Maps are not safe for concurrent use
+
+-If you need to read from and write to a map from concurrently executing goroutines, the accesses must be mediated by some kind of synchronization mechanism. 
+-common ways to protect maps is with sync.RWMutex. or sync.Map
+
+-iteration order of a map is not specified and is not guaranteed to be the same from one iteration to the next.
