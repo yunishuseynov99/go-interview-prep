@@ -1,0 +1,10 @@
+- **map** in golang is an implementation of a hash table
+
+==map[KeyType]ValueType
+
+-KeyType may be any type that is comparable
+
+-Map types are reference types
+
+== var m map[string]int
+
