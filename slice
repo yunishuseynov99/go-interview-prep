@@ -1,0 +1,54 @@
+-slice type is an abstraction built on top of Go’s array type
+
+DECLARATION
+
+-The type specification for a slice is []T, where T is the type of the elements of the slice. Unlike an array type, a slice type has no specified length.
+
+-A slice literal is declared just like an array literal, except you leave out the element count:
+
+= letters := []string{"a", "b", "c", "d"}
+-A slice can be created with the built-in function called make, which has the signature,
+
+= func make([]T, len, cap) []T
+
+-where T stands for the element type of the slice to be created. The make function takes a type, a length, and an optional capacity.
+When called, make allocates an array and returns a slice that refers to that array.
+
+= var s []byte
+s = make([]byte, 5, 5)
+// s == []byte{0, 0, 0, 0, 0}
+
+-When capacity argument is omitted, cap=len:
+
+= s := make([]byte, 5)
+
+-The length and capacity of a slice can be inspected using the built-in len and cap functions.
+
+= len(s) == 5
+cap(s) == 5
+
+===============================================================================================================================
+
+-The ZERO VALUE of a slice is nil. The len and cap functions will both return 0 for a nil slice.
+
+-A slice can also be formed by “slicing” an existing slice or array.
+
+= b := []byte{'g', 'o', 'l', 'a', 'n', 'g'}
+// b[1:4] == []byte{'o', 'l', 'a'}, sharing the same storage as b
+
+-The start and end indices of a slice expression are optional; they default to zero and the slice’s length respectively:
+
+= // b[:2] == []byte{'g', 'o'}
+// b[2:] == []byte{'l', 'a', 'n', 'g'}
+// b[:] == b
+
+-This is also the syntax to create a slice given an array:
+
+= x := [3]string{"Лайка", "Белка", "Стрелка"}
+s := x[:] // a slice referencing the storage of x
+
+======================================================================================================================================
+
+SLICE INTERNALS
+
+-A slice is a descriptor of an array segment. It consists of a pointer to the array, the length of the segment, and its capacity (the maximum length of the segment).
