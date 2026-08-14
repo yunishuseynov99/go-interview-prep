@@ -129,3 +129,41 @@ production
 
 И это уже **очень хороший базовый ответ**.
 
+Да, **ты слышал правильную идею**. Просто есть небольшой нюанс в терминологии.
+
+Самое простое разделение:
+
+* **CI (Continuous Integration)** → проверили код: build + tests + lint и т.д.
+* **Continuous Delivery** → подготовили **готовый релизный артефакт**, который можно доставить в production.
+* **Continuous Deployment** → **автоматически доставили/выкатили этот артефакт в production**.
+
+Например:
+
+```text
+Developer
+   ↓
+git push
+   ↓
+CI
+ ├─ build
+ ├─ tests
+ └─ Docker image
+        ↓
+Continuous Delivery
+        ↓
+   Ready for Prod
+        ↓
+   [Manual Approval]
+        ↓
+Continuous Deployment
+        ↓
+    Production
+```
+
+Но есть важный момент: **Continuous Delivery не обязательно означает только "собрали билд"**. Обычно туда входит весь автоматизированный процесс подготовки релиза и доставки его до состояния, когда он готов к production. А наличие ручного approval перед production — классическое отличие Delivery от Deployment.
+
+### Для интервью я бы сказал именно так:
+
+> **"CI — это интеграция и проверка изменений: build, tests и прочие проверки. Continuous Delivery — автоматическая подготовка приложения к релизу и доставка его до состояния, когда оно готово к production. А Continuous Deployment — когда после успешного pipeline новая версия автоматически выкатывается в production без ручного approval."**
+
+И да — **не привязывай Continuous Deployment к zero downtime**. Zero downtime — это уже **стратегия самого deployment**, например rolling deployment или blue-green deployment.
