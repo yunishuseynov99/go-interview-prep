@@ -56,3 +56,76 @@ CI/CD не гарантирует отсутствие простоя.
 > **"Со стороны разработки я понимал, что после пуша запускается pipeline, приложение собирается, создается Docker-образ и затем оно разворачивается. Но сам pipeline не писал."**
 
 Такой ответ звучит значительно сильнее, чем просто "слышал про CI/CD", и при этом остается полностью честным.
+
+Да, это важное различие.
+
+### Continuous Delivery
+
+**Delivery = "мы автоматически подготовили новую версию к релизу, но человек решает, когда её выпустить."**
+
+Например:
+
+```text
+git push
+   ↓
+build
+   ↓
+tests
+   ↓
+Docker image
+   ↓
+staging
+   ↓
+[ APPROVE / DEPLOY ]
+   ↓
+production
+```
+
+То есть до production всё автоматизировано, но перед production есть **ручное подтверждение**.
+
+---
+
+### Continuous Deployment
+
+**Deployment = "если всё прошло успешно — автоматически выкатываем в production."**
+
+```text
+git push
+   ↓
+build
+   ↓
+tests
+   ↓
+Docker image
+   ↓
+staging
+   ↓
+production
+```
+
+Никакого ручного `Approve`.
+
+---
+
+### Очень простой способ запомнить
+
+**Delivery:**
+
+> "Приложение готово к доставке, но человек нажимает кнопку."
+
+**Deployment:**
+
+> "Приложение само доехало до production."
+
+И поэтому:
+
+> **Continuous Deployment ⊂ Continuous Delivery**
+
+То есть Continuous Deployment — более автоматизированный вариант Continuous Delivery.
+
+На интервью можешь сказать:
+
+> **"Continuous Delivery — pipeline автоматически доводит приложение до состояния, когда его можно задеплоить в production, но сам production deployment может требовать approval. Continuous Deployment — если pipeline успешен, deployment в production происходит автоматически."**
+
+И это уже **очень хороший базовый ответ**.
+
