@@ -1,0 +1,73 @@
+# Scale from Zero to Millions: конспект для интервью
+
+**1. Single server**: всё на одном сервере (web, DB, cache). Старт, дальше только расти.
+
+**2. Разделяем web tier и data tier**: чтобы масштабировать независимо.
+
+**3. Какую DB выбрать**
+- **RDBMS** (MySQL, PostgreSQL, Oracle): дефолтный выбор, есть join'ы.
+- **NoSQL** (key-value, graph, column, document): берём, если нужна super-low latency, данные unstructured, нужно только serialize/deserialize, или огромный объём данных. Join'ы обычно не поддерживаются.
+
+**4. Vertical vs Horizontal scaling**
+- **Vertical (scale up)**: больше CPU/RAM. Просто, но есть hard limit, нет failover и redundancy.
+- **Horizontal (scale out)**: больше серверов. Для large scale только он.
+
+**5. Load balancer**
+- Распределяет трафик между web-серверами, клиенты ходят на public IP балансировщика, а серверы общаются через private IP (безопасность).
+- Решает failover (сервер упал, трафик идёт на другой) и availability. Нагрузка выросла, добавляем серверы в pool.
+
+**6. Database replication (master/slave)**
+- Master: только write. Slave'ы: только read (reads >> writes, поэтому slave'ов больше).
+- Плюсы: performance (параллельные reads), reliability, high availability.
+- Failover:
+  - Упал slave: reads идут на другие slave'ы (или на master, если slave один).
+  - Упал master: promote одного из slave'ов. Проблема в том, что данные на slave могут быть не up to date, поэтому нужны recovery scripts. Есть multi-master и circular replication, но они сложнее.
+
+**7. Cache**
+- Хранит результаты дорогих запросов и часто читаемые данные в памяти.
+- **Read-through cache**: проверили cache, если miss, пошли в DB, положили в cache, вернули.
+- Что учесть:
+  - Когда использовать: данные часто читаются и редко меняются.
+  - **Expiration policy**: не слишком короткий (частые походы в DB) и не слишком длинный (stale data).
+  - **Consistency**: DB и cache обновляются не в одной транзакции, в multi-region особенно сложно.
+  - **SPOF**: несколько cache-серверов в разных data centers, плюс overprovisioning памяти.
+  - **Eviction policy**: LRU (самый популярный), LFU, FIFO.
+
+**8. CDN**
+- Сеть географически распределённых серверов для static content (JS, CSS, images, video).
+- Flow: user запрашивает файл, при cache miss CDN идёт на origin (web server или S3), кладёт в кэш с **TTL** и отдаёт.
+- Что учесть:
+  - **Cost**: платим за трафик, редко используемые assets в CDN не нужны.
+  - **Expiry**: баланс между stale и лишними походами на origin.
+  - **Fallback**: при падении CDN клиент должен уметь идти на origin.
+  - **Invalidation**: через API вендора или **object versioning** (`image.png?v=2`).
+
+**9. Stateless web tier**
+- **Stateful**: сервер помнит state клиента, нужны **sticky sessions**, из-за этого сложно добавлять/убирать серверы и переживать падения.
+- **Stateless**: state (session) выносим в shared data store (Redis/Memcached, NoSQL, RDBMS). Любой сервер обслуживает любой запрос, поэтому работает **autoscaling**.
+
+**10. Multiple data centers**
+- **geoDNS** направляет юзеров в ближайший DC. При outage весь трафик идёт в здоровый DC.
+- Проблемы:
+  - **Traffic redirection** (geoDNS).
+  - **Data synchronization**: асинхронная репликация данных между DC (пример: Netflix).
+  - **Test & deployment**: тестировать в разных локациях, нужна автоматизация деплоя.
+
+**11. Message queue**
+- Durable компонент для **asynchronous communication**. Producers публикуют, consumers читают.
+- Decoupling: producer и consumer живут и масштабируются независимо, каждый может быть недоступен, пока работает другой.
+- Пример: обработка фото. Очередь растёт, добавляем workers. Очередь пустая, убираем.
+
+**12. Logging, metrics, automation**
+- **Logging**: централизованная агрегация логов.
+- **Metrics**: host level (CPU, RAM, disk I/O), aggregated level (вся DB tier, cache tier), business (DAU, retention, revenue).
+- **Automation**: CI, автоматизация build/test/deploy.
+
+**13. Database scaling: Sharding**
+- Делим DB на **shards** с одинаковой schema, но разными данными. Пример: `user_id % 4`.
+- **Sharding key (partition key)** — самое важное решение. Ключ должен равномерно распределять данные.
+- Проблемы sharding:
+  - **Resharding**: shard переполнился или данные распределены неравномерно, нужно менять hash function и перемещать данные. Решение: **consistent hashing** (Chapter 5).
+  - **Celebrity problem (hotspot key)**: один shard перегружен запросами. Решение: отдельный shard (или несколько) под «знаменитостей».
+  - **Join и de-normalization**: join'ы между shards сложны, поэтому делаем денормализацию, чтобы запрос шёл в одну таблицу.
+- Часть нагрузки можно вынести в NoSQL.
